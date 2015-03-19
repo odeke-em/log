@@ -10,18 +10,52 @@ type Loggerf func(string, ...interface{}) (int, error)
 type Loggerln func(...interface{}) (int, error)
 
 type logy struct {
+	print   Loggerln
 	printf  Loggerf
 	println Loggerln
+}
+
+type logyIn struct {
+	scan   Loggerln
+	scanf  Loggerf
+	scanln Loggerln
 }
 
 type Logger struct {
 	Logf     Loggerf
 	Logln    Loggerln
+	Log      Loggerln
+	LogErr   Loggerln
 	LogErrf  Loggerf
 	LogErrln Loggerln
+	Scanf    Loggerf
+	Scan     Loggerln
+	Scanln   Loggerln
 }
 
-func newLogger(f io.Writer) *logy {
+func newLoggerIn(fIn io.Reader) *logyIn {
+	if fIn == nil {
+		fIn = os.Stdin
+	}
+
+	finf := func(format string, args ...interface{}) (int, error) {
+		return fmt.Fscanf(fIn, format, args...)
+	}
+	finln := func(args ...interface{}) (int, error) {
+		return fmt.Fscanln(fIn, args...)
+	}
+	fin := func(args ...interface{}) (int, error) {
+		return fmt.Fscan(fIn, args...)
+	}
+
+	return &logyIn{
+		scan:   fin,
+		scanf:  finf,
+		scanln: finln,
+	}
+}
+
+func newLoggerOut(f io.Writer) *logy {
 	if f == nil {
 		f = os.Stdout
 	}
@@ -33,13 +67,18 @@ func newLogger(f io.Writer) *logy {
 		return fmt.Fprintln(f, args...)
 	}
 
+	ff := func(args ...interface{}) (int, error) {
+		return fmt.Fprint(f, args...)
+	}
+
 	return &logy{
+		print:   ff,
 		printf:  fl,
 		println: fln,
 	}
 }
 
-func New(writers ...io.Writer) *Logger {
+func New(stdin io.Reader, writers ...io.Writer) *Logger {
 	var stdout, stderr io.Writer
 
 	wLen := len(writers)
@@ -50,13 +89,18 @@ func New(writers ...io.Writer) *Logger {
 		stderr = writers[1]
 	}
 
-	stdouter := newLogger(stdout)
-	stderrer := newLogger(stderr)
+	stdouter := newLoggerOut(stdout)
+	stderrer := newLoggerOut(stderr)
+	stdiner := newLoggerIn(stdin)
 
 	return &Logger{
 		Logf:     stdouter.printf,
+		Log:      stdouter.print,
 		Logln:    stdouter.println,
+		LogErr:   stderrer.print,
 		LogErrf:  stderrer.printf,
 		LogErrln: stderrer.println,
+		Scanf:    stdiner.scanf,
+		Scanln:   stdiner.scanln,
 	}
 }

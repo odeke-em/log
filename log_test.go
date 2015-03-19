@@ -6,7 +6,7 @@ import (
 )
 
 func TestInitWithNoArgs(t *testing.T) {
-	logf := New()
+	logf := New(os.Stdin)
 	if logf == nil {
 		t.Errorf("Expected non-nil logger")
 	}
@@ -25,14 +25,22 @@ func TestInitWithNoArgs(t *testing.T) {
 }
 
 func TestWithOneWriter(t *testing.T) {
-	logf := New(os.Stdout)
+	logf := New(os.Stdin, os.Stdout)
 	if logf == nil {
 		t.Errorf("not expecting a nil logger")
 	}
 	logf.Logf("OutPut: %s %v\n", "trivia", logf)
 	logf.Logln("OutPut")
 
-	logf = New(os.Stdout, os.Stderr)
+	logf = New(os.Stdin, os.Stdout, os.Stderr)
+
+	if false {
+		var lineIn string
+		logf.Log("Line in: ")
+		logf.Scanln(&lineIn)
+		logf.Logf("Read in %s\n", lineIn)
+	}
+
 	logf.LogErrf("Errf here: %s calling: %v\n", "bingo", logf)
-	logf.LogErrln("Errf here: %s calling: %v\n", "bingo", logf)
+	logf.LogErrln("Errf here:", "bing", "calling\n", logf)
 }
