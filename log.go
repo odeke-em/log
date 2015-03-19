@@ -6,19 +6,19 @@ import (
 	"os"
 )
 
-type loggerf func(string, ...interface{}) (int, error)
-type loggerln func(...interface{}) (int, error)
+type Loggerf func(string, ...interface{}) (int, error)
+type Loggerln func(...interface{}) (int, error)
 
 type logy struct {
-	printf  loggerf
-	println loggerln
+	printf  Loggerf
+	println Loggerln
 }
 
 type Logger struct {
-	Logf     loggerf
-	Logln    loggerln
-	LogErrf  loggerf
-	LogErrln loggerln
+	Logf     Loggerf
+	Logln    Loggerln
+	LogErrf  Loggerf
+	LogErrln Loggerln
 }
 
 func newLogger(f io.Writer) *logy {
