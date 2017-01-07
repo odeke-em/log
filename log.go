@@ -22,6 +22,7 @@ type logyIn struct {
 }
 
 type Logger struct {
+	w        io.Writer
 	Logf     Loggerf
 	Logln    Loggerln
 	Log      Loggerln
@@ -89,6 +90,9 @@ func newLoggerOut(f io.Writer) *logy {
 	}
 }
 
+// Ensure that Logger conforms to io.Writer
+var _ io.Writer = (*Logger)(nil)
+
 func New(stdin io.Reader, writers ...io.Writer) *Logger {
 	var stdout, stderr io.Writer
 
@@ -104,7 +108,7 @@ func New(stdin io.Reader, writers ...io.Writer) *Logger {
 	stderrer := newLoggerOut(stderr)
 	stdiner := newLoggerIn(stdin)
 
-	return &Logger{
+	logger := &Logger{
 		Logf:     stdouter.printf,
 		Log:      stdouter.print,
 		Logln:    stdouter.println,
@@ -114,4 +118,17 @@ func New(stdin io.Reader, writers ...io.Writer) *Logger {
 		Scanf:    stdiner.scanf,
 		Scanln:   stdiner.scanln,
 	}
+
+	if len(writers) > 0 {
+		logger.w = io.MultiWriter(writers...)
+	}
+
+	return logger
+}
+
+func (l *Logger) Write(b []byte) (int, error) {
+	if l.w == nil {
+		return 0, nil
+	}
+	return l.w.Write(b)
 }

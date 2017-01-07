@@ -1,6 +1,8 @@
 package log
 
 import (
+	"bytes"
+	"fmt"
 	"os"
 	"testing"
 )
@@ -43,4 +45,15 @@ func TestWithOneWriter(t *testing.T) {
 
 	logf.LogErrf("Errf here: %s calling: %v\n", "bingo", logf)
 	logf.LogErrln("Errf here:", "bing", "calling\n", logf)
+}
+
+func TestLoggerConformsToWriter(t *testing.T) {
+	buf := new(bytes.Buffer)
+	logf := New(os.Stdin, buf)
+	text := "this is a test!!"
+	fmt.Fprintf(logf, text)
+
+	if got, want := string(buf.Bytes()), text; got != want {
+		t.Errorf("got=%s\nwant=%s\n", got, want)
+	}
 }
